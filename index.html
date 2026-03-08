@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Поздравительная открытка</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-from: #2724EC;
+    --bg-to: #A650F5;
+    --petal-1: #ff6b9d;
+    --petal-2: #ff8fab;
+    --petal-3: #ffb3c6;
+    --petal-4: #ffd6e0;
+    --petal-5: #ff4785;
+    --text-title: #fff0f5;
+    --text-sub: #ffb3c6;
+    --text-msg: #ffe4ee;
+    --glow: #ff6b9d;
+    --bud-center: #ffe066;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: linear-gradient(156deg, var(--bg-from), var(--bg-to));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: background 0.8s ease;
+  }
+
+  /* ─── CANVAS ─── */
+  #canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ─── CARD ─── */
+  .card-wrapper {
+    position: relative;
+    z-index: 10;
+    perspective: 1200px;
+  }
+
+  .card {
+    width: min(560px, 92vw);
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 52px 44px 44px;
+    text-align: center;
+    box-shadow:
+      0 32px 80px rgba(0,0,0,0.45),
+      0 0 60px rgba(255,107,157,0.18),
+      inset 0 0 40px rgba(255,255,255,0.04);
+    animation: cardReveal 1.2s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes cardReveal {
+    from { opacity:0; transform: translateY(60px) rotateX(12deg) scale(.94); }
+    to   { opacity:1; transform: translateY(0)   rotateX(0)      scale(1); }
+  }
+
+  /* ─── BLOOM CLUSTER ─── */
+  .bloom-cluster {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+
+  .bloom {
+    width: 58px; height: 58px;
+    position: relative;
+    animation: bloomIn 1.4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .bloom:nth-child(2) { animation-delay:.15s; }
+  .bloom:nth-child(3) { animation-delay:.30s; }
+
+  @keyframes bloomIn {
+    from { opacity:0; transform: scale(0) rotate(-60deg); }
+    to   { opacity:1; transform: scale(1) rotate(0deg); }
+  }
+
+  .bloom svg { width: 100%; height: 100%; overflow: visible; }
+
+  .petal-svg {
+    transform-origin: 29px 42px;
+    animation: petalWave 3s ease-in-out infinite;
+  }
+  .bloom:nth-child(1) .petal-svg { animation-delay: 0s; }
+  .bloom:nth-child(2) .petal-svg { animation-delay: .4s; }
+  .bloom:nth-child(3) .petal-svg { animation-delay: .8s; }
+
+  @keyframes petalWave {
+    0%,100% { transform: scaleY(1) rotate(0deg); }
+    50%      { transform: scaleY(1.06) rotate(2deg); }
+  }
+
+  /* ─── TYPOGRAPHY ─── */
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 700;
+    color: var(--text-title);
+    line-height: 1.1;
+    text-shadow: 0 0 40px var(--glow);
+    margin-bottom: 10px;
+    animation: fadeUp .9s .4s both;
+  }
+
+  .card-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(1.5rem, 3vw, 2.3rem);
+    color: var(--text-sub);
+    margin-bottom: 28px;
+    animation: fadeUp .9s .55s both;
+  }
+
+  .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--glow), transparent);
+    margin: 0 auto 28px;
+    animation: fadeUp .9s .6s both;
+  }
+
+  .card-message {
+    font-size: clamp(1.8rem, 3vw, 1.3rem);
+    font-weight: 300;
+    color: var(--text-msg);
+    line-height: 1.75;
+    letter-spacing: .02em;
+    animation: fadeUp .9s .7s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(22px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  /* ─── PANEL ─── */
+  .panel-toggle {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    z-index: 100;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background .3s, transform .2s;
+    box-shadow: 0 8px 28px rgba(0,0,0,.3);
+  }
+  .panel-toggle:hover { background: rgba(255,255,255,.22); transform: scale(1.05); }
+
+  .panel {
+    position: fixed;
+    bottom: 90px; right: 28px;
+    z-index: 100;
+    width: min(340px, 92vw);
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+    background: rgba(18,6,36,0.82);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 24px;
+    transform: translateY(20px) scale(.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: all .35s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 4px; }
+  .panel.open { opacity:1; transform: translateY(0) scale(1); pointer-events: all; }
+
+  .panel h3 {
+    font-family:'Playfair Display',serif;
+    color:#fff;
+    font-size:1.1rem;
+    margin-bottom:18px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    padding-bottom:10px;
+  }
+
+  .ctrl-group { margin-bottom: 16px; }
+  .ctrl-group label {
+    display: block;
+    font-size: .82rem;
+    color: rgba(255,255,255,.55);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+
+  .ctrl-group input[type="color"] {
+    width: 100%;
+    height: 38px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 2px;
+    background: rgba(255,255,255,.08);
+  }
+
+  .ctrl-group input[type="text"],
+  .ctrl-group textarea {
+    width: 100%;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: .95rem;
+    outline: none;
+    transition: border .2s;
+    resize: none;
+  }
+  .ctrl-group input[type="text"]:focus,
+  .ctrl-group textarea:focus { border-color: var(--glow); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .ctrl-group select {
+    width: 100%;
+    background: #1a0a2e;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: .95rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+  }
+  .ctrl-group select option {
+    background: #1a0a2e;
+    color: #fff;
+  }
+
+  .petal-colors {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .petal-colors input[type="color"] {
+    width: 38px; height: 38px;
+    padding: 2px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(255,255,255,.08);
+  }
+
+  .btn-apply {
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px;
+    background: linear-gradient(135deg, var(--petal-1), var(--petal-5));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+  }
+  .btn-apply:hover { opacity:.85; transform:scale(1.02); }
+
+  /* ─── FALLING PETALS (canvas drawn) ─── */
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="card-wrapper">
+  <div class="card">
+    <div class="bloom-cluster" id="bloomCluster">
+      <!-- blooms rendered by JS -->
+    </div>
+    <h1 class="card-title" id="cardTitle">С Праздником!</h1>
+    <p class="card-subtitle" id="cardSubtitle">МАМА!</p>
+    <div class="divider"></div>
+    <p class="card-message" id="cardMessage">
+      Пусть этот день наполнится теплом,<br>
+      радостью и улыбками близких.<br>
+      Желаю счастья, здоровья<br>
+      и исполнения всех мечтаний! 🌸
+    </p>
+  </div>
+</div>
+
+<button class="panel-toggle" id="panelToggle">⚙ Настройки</button>
+
+<div class="panel" id="panel">
+  <h3>✦ Редактор открытки</h3>
+
+  <div class="ctrl-group">
+    <label>Заголовок</label>
+    <input type="text" id="inputTitle" value="С Праздником!">
+  </div>
+  <div class="ctrl-group">
+    <label>Подзаголовок</label>
+    <input type="text" id="inputSubtitle" value="МАМА!">
+  </div>
+  <div class="ctrl-group">
+    <label>Текст поздравления</label>
+    <textarea id="inputMessage" rows="4">Пусть этот день наполнится теплом,
+радостью и улыбками близких.
+Желаю счастья, здоровья
+и исполнения всех мечтаний! 🌸</textarea>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Цвета лепестков (5 оттенков)</label>
+    <div class="petal-colors" id="petalColorPickers"></div>
+  </div>
+
+  <div class="row-2">
+    <div class="ctrl-group">
+      <label>Фон (от)</label>
+      <input type="color" id="bgFrom" value="#EBF7C0">
+    </div>
+    <div class="ctrl-group">
+      <label>Фон (до)</label>
+      <input type="color" id="bgTo" value="#3F006D">
+    </div>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Цвет заголовка</label>
+    <input type="color" id="titleColor" value="#fff0f5">
+  </div>
+  <div class="ctrl-group">
+    <label>Цвет подзаголовка</label>
+    <input type="color" id="subtitleColor" value="#ffb3c6">
+  </div>
+  <div class="ctrl-group">
+    <label>Цвет текста</label>
+    <input type="color" id="msgColor" value="#ffe4ee">
+  </div>
+  <div class="ctrl-group">
+    <label>Анимация лепестков</label>
+    <select id="animMode">
+      <option value="petals">🌸 Падающие лепестки</option>
+      <option value="buds">🌺 Раскрывающиеся бутоны</option>
+      <option value="both">✨ Оба эффекта</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Количество частиц — <span id="petalCountVal">40</span></label>
+    <input type="range" id="petalCount" min="10" max="100" value="40" style="width:100%;accent-color:var(--glow)">
+  </div>
+  <div class="ctrl-group">
+    <label>Лепестков у цветка — <span id="flowerPetalsVal">12</span></label>
+    <input type="range" id="flowerPetals" min="5" max="20" value="12" style="width:100%;accent-color:var(--glow)">
+  </div>
+
+  <button class="btn-apply" id="btnApply">Применить</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+let CFG = {
+  petals: ['#ff6b9d','#ff8fab','#ffb3c6','#ffd6e0','#ff4785'],
+  bgFrom: '#EBF7C0',
+  bgTo:   '#3F006D',
+  count:  40,
+  flowerPetals: 12,
+  mode:   'both',
+};
+
+/* ═══════════════════════════════════════════════
+   SVG BLOOM RENDERER
+═══════════════════════════════════════════════ */
+function buildBloom(petalColor, centerColor, n) {
+  n = n || 12;
+  const cx = 29, cy = 29;
+  const petalLen = 16;    // how long the petal extends from center
+  const petalW   = 4.5;   // half-width at widest point
+  const petalBase = 6;    // petals start this far from center
+
+  let petals = '';
+  for (let i = 0; i < n; i++) {
+    const angleDeg = (360 / n) * i;
+    const angleRad = angleDeg * Math.PI / 180;
+
+    // tip of petal
+    const tx = (cx + Math.cos(angleRad) * (petalBase + petalLen)).toFixed(2);
+    const ty = (cy + Math.sin(angleRad) * (petalBase + petalLen)).toFixed(2);
+
+    // control points for rounded petal shape (cubic bezier on each side)
+    const perpX = -Math.sin(angleRad);
+    const perpY =  Math.cos(angleRad);
+    const mid = petalBase + petalLen * 0.5;
+    const bx1 = (cx + Math.cos(angleRad) * (petalBase + petalLen * 0.1) + perpX * petalW).toFixed(2);
+    const by1 = (cy + Math.sin(angleRad) * (petalBase + petalLen * 0.1) + perpY * petalW).toFixed(2);
+    const bx2 = (cx + Math.cos(angleRad) * (petalBase + petalLen * 0.7) + perpX * petalW).toFixed(2);
+    const by2 = (cy + Math.sin(angleRad) * (petalBase + petalLen * 0.7) + perpY * petalW).toFixed(2);
+    const bx3 = (cx + Math.cos(angleRad) * (petalBase + petalLen * 0.1) - perpX * petalW).toFixed(2);
+    const by3 = (cy + Math.sin(angleRad) * (petalBase + petalLen * 0.1) - perpY * petalW).toFixed(2);
+    const bx4 = (cx + Math.cos(angleRad) * (petalBase + petalLen * 0.7) - perpX * petalW).toFixed(2);
+    const by4 = (cy + Math.sin(angleRad) * (petalBase + petalLen * 0.7) - perpY * petalW).toFixed(2);
+    // petal base attachment points
+    const startX = (cx + Math.cos(angleRad) * petalBase + perpX * 2).toFixed(2);
+    const startY = (cy + Math.sin(angleRad) * petalBase + perpY * 2).toFixed(2);
+    const endX   = (cx + Math.cos(angleRad) * petalBase - perpX * 2).toFixed(2);
+    const endY   = (cy + Math.sin(angleRad) * petalBase - perpY * 2).toFixed(2);
+
+    const shade = i % 2 === 0 ? petalColor : lighten(petalColor, 20);
+
+    petals += `<path d="M ${startX} ${startY} C ${bx1} ${by1}, ${bx2} ${by2}, ${tx} ${ty} C ${bx4} ${by4}, ${bx3} ${by3}, ${endX} ${endY} Z"
+      fill="${shade}" opacity="0.95" />`;
+  }
+
+  return `<svg viewBox="0 0 58 58" xmlns="http://www.w3.org/2000/svg">
+    ${petals}
+    <circle cx="${cx}" cy="${cy}" r="8"   fill="${centerColor}" />
+    <circle cx="${cx}" cy="${cy}" r="5.5" fill="${lighten(centerColor, 45)}" />
+    <circle cx="${cx}" cy="${cy}" r="3"   fill="${lighten(centerColor, 80)}" />
+  </svg>`;
+}
+
+function lighten(hex, pct) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, (n >> 16) + pct);
+  const g = Math.min(255, ((n >> 8) & 0xff) + pct);
+  const b = Math.min(255, (n & 0xff) + pct);
+  return `rgb(${r},${g},${b})`;
+}
+
+function lightenHex(hex, pct) { return lighten(hex, pct); }
+
+function renderBlooms() {
+  const c = document.getElementById('bloomCluster');
+  c.innerHTML = '';
+  CFG.petals.slice(0,3).forEach((col, i) => {
+    const div = document.createElement('div');
+    div.className = 'bloom';
+    div.innerHTML = buildBloom(col, getComputedStyle(document.documentElement).getPropertyValue('--bud-center').trim() || '#ffe066', CFG.flowerPetals);
+    c.appendChild(div);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   CANVAS ANIMATION
+═══════════════════════════════════════════════ */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let animId;
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+class FallingPetal {
+  constructor() { this.reset(true); }
+
+  reset(init) {
+    this.x  = Math.random() * canvas.width;
+    this.y  = init ? Math.random() * canvas.height : -20;
+    this.r  = 6 + Math.random() * 9;
+    this.ry = this.r * (0.4 + Math.random() * 0.4); // ellipse y-radius
+    this.vx = -1 + Math.random() * 2;
+    this.vy = 1 + Math.random() * 2.5;
+    this.rot   = Math.random() * Math.PI * 2;
+    this.vrot  = (-0.03 + Math.random() * 0.06);
+    this.color = CFG.petals[Math.floor(Math.random() * CFG.petals.length)];
+    this.alpha = 0.6 + Math.random() * 0.4;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = 0.02 + Math.random() * 0.03;
+  }
+
+  update() {
+    this.wobble += this.wobbleSpeed;
+    this.x  += this.vx + Math.sin(this.wobble) * 0.8;
+    this.y  += this.vy;
+    this.rot += this.vrot;
+    if (this.y > canvas.height + 30) this.reset(false);
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.r, this.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+class FallingFlower {
+  constructor() { this.reset(true); }
+
+  reset(init) {
+    this.x  = Math.random() * canvas.width;
+    this.y  = init ? Math.random() * canvas.height : -40;
+    this.size = 11 + Math.random() * 13;
+    this.vx = -0.8 + Math.random() * 1.6;
+    this.vy = 0.7 + Math.random() * 1.6;
+    this.rot = Math.random() * Math.PI * 2;
+    this.vrot = (-0.018 + Math.random() * 0.036);
+    this.petalColor = CFG.petals[Math.floor(Math.random() * CFG.petals.length)];
+    this.alpha = 0.75 + Math.random() * 0.25;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = 0.012 + Math.random() * 0.02;
+    this.n = CFG.flowerPetals;
+  }
+
+  update() {
+    this.wobble += this.wobbleSpeed;
+    this.x += this.vx + Math.sin(this.wobble) * 0.5;
+    this.y += this.vy;
+    this.rot += this.vrot;
+    if (this.y > canvas.height + 50) this.reset(false);
+  }
+
+  drawPetal(angle) {
+    const s = this.size;
+    const base = s * 0.28;      // start from center
+    const len  = s * 0.95;      // length of petal
+    const hw   = s * 0.22;      // half-width
+
+    const ax = Math.cos(angle), ay = Math.sin(angle);
+    const px = -Math.sin(angle), py = Math.cos(angle);
+
+    const x0 = ax * base + px * 2,  y0 = ay * base + py * 2;
+    const x1 = ax * base - px * 2,  y1 = ay * base - py * 2;
+    const tx  = ax * (base + len),   ty  = ay * (base + len);
+
+    const cp1x = ax*(base+len*0.15) + px*hw, cp1y = ay*(base+len*0.15) + py*hw;
+    const cp2x = ax*(base+len*0.70) + px*hw, cp2y = ay*(base+len*0.70) + py*hw;
+    const cp3x = ax*(base+len*0.70) - px*hw, cp3y = ay*(base+len*0.70) - py*hw;
+    const cp4x = ax*(base+len*0.15) - px*hw, cp4y = ay*(base+len*0.15) - py*hw;
+
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, tx, ty);
+    ctx.bezierCurveTo(cp3x, cp3y, cp4x, cp4y, x1, y1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+    ctx.globalAlpha = this.alpha;
+
+    const step = (Math.PI * 2) / this.n;
+
+    // outer petals
+    for (let i = 0; i < this.n; i++) {
+      ctx.fillStyle = i % 2 === 0 ? this.petalColor : lightenHex(this.petalColor, 25);
+      ctx.shadowColor = this.petalColor;
+      ctx.shadowBlur = 5;
+      this.drawPetal(step * i);
+    }
+
+    // center
+    const r = this.size * 0.22;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#e8a000';
+    ctx.shadowColor = '#ffe066';
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#ffe066';
+    ctx.shadowBlur = 4;
+    ctx.beginPath(); ctx.arc(0, 0, r*0.65, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#fff8c0';
+    ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(0, 0, r*0.3, 0, Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+function buildParticles() {
+  particles = [];
+  const n = CFG.count;
+  if (CFG.mode === 'petals' || CFG.mode === 'both') {
+    for (let i = 0; i < n; i++) particles.push(new FallingPetal());
+  }
+  if (CFG.mode === 'buds' || CFG.mode === 'both') {
+    for (let i = 0; i < Math.ceil(n * 0.5); i++) particles.push(new FallingFlower());
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  animId = requestAnimationFrame(animate);
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL PICKERS INIT
+═══════════════════════════════════════════════ */
+const petalPickersEl = document.getElementById('petalColorPickers');
+CFG.petals.forEach((col, i) => {
+  const inp = document.createElement('input');
+  inp.type  = 'color';
+  inp.value = col;
+  inp.id    = `pc${i}`;
+  petalPickersEl.appendChild(inp);
+});
+
+/* ═══════════════════════════════════════════════
+   PANEL TOGGLE
+═══════════════════════════════════════════════ */
+document.getElementById('panelToggle').addEventListener('click', () => {
+  document.getElementById('panel').classList.toggle('open');
+});
+
+// Live slider labels
+document.getElementById('petalCount').addEventListener('input', e => {
+  document.getElementById('petalCountVal').textContent = e.target.value;
+});
+document.getElementById('flowerPetals').addEventListener('input', e => {
+  document.getElementById('flowerPetalsVal').textContent = e.target.value;
+});
+
+/* ═══════════════════════════════════════════════
+   APPLY SETTINGS
+═══════════════════════════════════════════════ */
+document.getElementById('btnApply').addEventListener('click', () => {
+  // Text
+  document.getElementById('cardTitle').textContent    = document.getElementById('inputTitle').value;
+  document.getElementById('cardSubtitle').textContent = document.getElementById('inputSubtitle').value;
+  document.getElementById('cardMessage').innerHTML    =
+    document.getElementById('inputMessage').value.replace(/\n/g, '<br>');
+
+  // Petal colors
+  CFG.petals = [0,1,2,3,4].map(i => document.getElementById(`pc${i}`).value);
+
+  // CSS vars for petals
+  const root = document.documentElement;
+  CFG.petals.forEach((c, i) => root.style.setProperty(`--petal-${i+1}`, c));
+
+  // Background
+  CFG.bgFrom = document.getElementById('bgFrom').value;
+  CFG.bgTo   = document.getElementById('bgTo').value;
+  document.body.style.background = `linear-gradient(156deg, ${CFG.bgFrom}, ${CFG.bgTo})`;
+
+  // Title & msg color
+  const tc = document.getElementById('titleColor').value;
+  const sc = document.getElementById('subtitleColor').value;
+  const mc = document.getElementById('msgColor').value;
+  root.style.setProperty('--text-title', tc);
+  root.style.setProperty('--text-sub',   sc);
+  root.style.setProperty('--text-msg',   mc);
+  root.style.setProperty('--glow', CFG.petals[0]);
+
+  // Mode & count
+  CFG.mode  = document.getElementById('animMode').value;
+  CFG.count = parseInt(document.getElementById('petalCount').value);
+  CFG.flowerPetals = parseInt(document.getElementById('flowerPetals').value);
+
+  // Rebuild
+  cancelAnimationFrame(animId);
+  buildParticles();
+  animate();
+  renderBlooms();
+});
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+renderBlooms();
+buildParticles();
+animate();
+</script>
+</body>
+</html>
